@@ -1,0 +1,4 @@
+# .gitignore
+
+# Ignorar archivos de entorno
+.env

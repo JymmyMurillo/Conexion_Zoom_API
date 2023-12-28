@@ -1,14 +1,19 @@
 import base64
 from flask import Flask, request, redirect, jsonify
 import requests
+import os
+from dotenv import load_dotenv
+
+# Cargar variables de entorno desde el archivo .env
+load_dotenv()
 
 app = Flask(__name__)
-app.secret_key = b'SecretKey'  # Cambia esto con una clave segura y guárdala de forma segura
+app.secret_key = os.getenv('FLASK_SECRET_KEY')  # Cambia esto con una clave segura y guárdala de forma segura
 
 # Configuración de la aplicación OAuth en Zoom
-client_id = 'client_id'
-client_secret = 'client_secret'
-redirect_uri = 'redirect_uri'  # Ajusta esto según tu configuración en la plataforma de desarrollo de Zoom
+client_id = os.getenv('ZOOM_CLIENT_ID')
+client_secret = os.getenv('ZOOM_CLIENT_SECRET')
+redirect_uri = os.getenv('ZOOM_REDIRECT_URI')  # Ajusta esto según tu configuración en la plataforma de desarrollo de Zoom
 
 # URL de autorización de Zoom
 authorization_url = f'https://zoom.us/oauth/authorize?response_type=code&client_id={client_id}&redirect_uri={redirect_uri}'
