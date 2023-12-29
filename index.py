@@ -51,7 +51,7 @@ def redirect_page():
     #user_info = user_response.json()
 
     # Obtener listado  de asistencia a la reunion
-    api_url = f'{base_api_url}/report/meetings/{meeting_id}/participants'
+    api_url = f'{base_api_url}/report/meetings/{meeting_id}/participants?page_size=300'
     headers = {'Authorization': f'Bearer {access_token}'}
     api_response = requests.get(api_url, headers=headers)
     api_info = api_response.json()
