@@ -84,8 +84,8 @@ La aplicación se ejecutará en http://localhost:5000/. Abre tu navegador y acce
 
 # Uso
 1. Haz clic en "Iniciar sesión con Zoom" en la página principal.
-    ![Imagen de como se ve en pantalla](src/img/App_7.png)
+    ![Imagen de como se ve en pantalla](src/img/App_7.PNG)
 2. Autoriza la aplicación en la página de autenticación de Zoom.
     ![Imagen de como se ve en pantalla](src/img/Aut_Acces.png)
 3. Serás redirigido de nuevo a la aplicación, donde se mostrará la información de los participantes.
-    ![Imagen de como se ve en pantalla](src/img/App_8.png)
+    ![Imagen de como se ve en pantalla](src/img/App_8.PNG)
