@@ -53,11 +53,11 @@ def redirect_page():
     # Obtener listado  de asistencia a la reunion
     api_url = f'{base_api_url}/report/meetings/{meeting_id}/participants'
     headers = {'Authorization': f'Bearer {access_token}'}
-    user_response = requests.get(api_url, headers=headers)
-    user_info = user_response.json()
+    api_response = requests.get(api_url, headers=headers)
+    api_info = api_response.json()
 
     # Aquí puedes hacer lo que quieras con la información del usuario
-    return jsonify(user_info)
+    return jsonify(api_info)
 
 if __name__ == '__main__':
     app.run(debug=True)
