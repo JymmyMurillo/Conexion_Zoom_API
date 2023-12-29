@@ -25,7 +25,44 @@ base_api_url = f'https://api.zoom.us/v2'
 @app.route('/')
 def home():
     """Ruta principal que redirige a la página de autorización de Zoom."""
-    return f'<a href="{authorization_url}">Iniciar sesión con Zoom</a>'
+    return f'''
+        <!DOCTYPE html>
+        <html lang="en">
+        <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <style>
+                body {{
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    height: 100vh;
+                    margin: 0;
+                }}
+
+                .zoom-button {{
+                    display: inline-block;
+                    padding: 10px 20px;
+                    font-size: 32px;
+                    text-align: center;
+                    text-decoration: none;
+                    background-color: #0000ff;
+                    color: #ffffff;
+                    border-radius: 5px;
+                    transition: background-color 0.3s ease;
+                }}
+
+                .zoom-button:hover {{
+                    background-color: #27ae60;
+                }}
+            </style>
+            <title>Iniciar sesión con Zoom</title>
+        </head>
+        <body>
+            <a class="zoom-button" href="{authorization_url}">Iniciar sesión con Zoom</a>
+        </body>
+        </html>
+    '''
 
 @app.route('/redirect')
 def redirect_page():
