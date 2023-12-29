@@ -14,9 +14,13 @@ app.secret_key = os.getenv('FLASK_SECRET_KEY')  # Cambia esto con una clave segu
 client_id = os.getenv('ZOOM_CLIENT_ID')
 client_secret = os.getenv('ZOOM_CLIENT_SECRET')
 redirect_uri = os.getenv('ZOOM_REDIRECT_URI')  # Ajusta esto según tu configuración en la plataforma de desarrollo de Zoom
+meeting_id = os.getenv('ZOOM_MEETING_ID') # Corresponde al ID de la reunion a revisar, hay que cambiarlo cada vez que se crea una nueva reunion
 
 # URL de autorización de Zoom
 authorization_url = f'https://zoom.us/oauth/authorize?response_type=code&client_id={client_id}&redirect_uri={redirect_uri}'
+
+# API_URL base
+base_api_url = f'https://api.zoom.us/v2'
 
 @app.route('/')
 def home():
@@ -41,9 +45,15 @@ def redirect_page():
     access_token = token_data.get('access_token')
 
     # Obtener información del usuario utilizando el token de acceso
-    user_url = 'https://api.zoom.us/v2/users/me'
+    #user_url = '{base_api_url}/users/me'
+    #headers = {'Authorization': f'Bearer {access_token}'}
+    #user_response = requests.get(user_url, headers=headers)
+    #user_info = user_response.json()
+
+    # Obtener listado  de asistencia a la reunion
+    api_url = f'{base_api_url}/report/meetings/{meeting_id}/participants'
     headers = {'Authorization': f'Bearer {access_token}'}
-    user_response = requests.get(user_url, headers=headers)
+    user_response = requests.get(api_url, headers=headers)
     user_info = user_response.json()
 
     # Aquí puedes hacer lo que quieras con la información del usuario
