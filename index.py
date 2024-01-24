@@ -81,12 +81,6 @@ def redirect_page():
     token_data = response.json()
     access_token = token_data.get('access_token')
 
-    # Obtener información del usuario utilizando el token de acceso
-    #user_url = '{base_api_url}/users/me'
-    #headers = {'Authorization': f'Bearer {access_token}'}
-    #user_response = requests.get(user_url, headers=headers)
-    #user_info = user_response.json()
-
     # Obtener listado  de asistencia a la reunion
     api_url = f'{base_api_url}/report/meetings/{meeting_id}/participants?page_size=300'
     headers = {'Authorization': f'Bearer {access_token}'}
