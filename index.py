@@ -81,14 +81,39 @@ def redirect_page():
     token_data = response.json()
     access_token = token_data.get('access_token')
 
-    # Obtener listado  de asistencia a la reunion
-    api_url = f'{base_api_url}/report/meetings/{meeting_id}/participants?page_size=300'
-    headers = {'Authorization': f'Bearer {access_token}'}
-    api_response = requests.get(api_url, headers=headers)
-    api_info = api_response.json()
+      # Inicializar una lista para almacenar todos los participantes
+    all_participants = []
 
-    # Aquí puedes hacer lo que quieras con la información del usuario
-    return jsonify(api_info)
+    # Obtener listado de asistencia a la reunión con paginación
+    next_page_token = None
+
+    while True:
+        # Construir la URL de la API con el token de la página siguiente si está disponible
+        if next_page_token:
+            api_url = f'{base_api_url}/report/meetings/{meeting_id}/participants?page_size=300&next_page_token={next_page_token}'
+        else:
+            api_url = f'{base_api_url}/report/meetings/{meeting_id}/participants?page_size=300'
+
+        headers = {'Authorization': f'Bearer {access_token}'}
+        api_response = requests.get(api_url, headers=headers)
+        api_info = api_response.json()
+
+        # Agregar los participantes de la página actual a la lista
+        all_participants.extend(api_info.get('participants', []))
+
+        # Verificar si hay más páginas
+        next_page_token = api_info.get('next_page_token')
+        if not next_page_token:
+            break  # Salir del bucle si no hay más páginas
+
+    # Incluir el total de registros en el objeto JSON de salida
+    result = {
+        'total_records': api_info.get('total_records', 0),
+        'participants': all_participants
+    }
+
+    # Puedes hacer lo que quieras con la lista completa de participantes
+    return jsonify(result)
 
 if __name__ == '__main__':
     app.run(debug=True)
