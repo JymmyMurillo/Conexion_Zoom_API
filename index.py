@@ -83,7 +83,7 @@ def redirect_page():
     access_token = token_data.get('access_token')
 
     # Inicializar un diccionario para almacenar información de participantes agrupada por nombre
-    participant_data = defaultdict(lambda: {'connections': 0, 'connection_times': []})
+    participant_data = defaultdict(lambda: {'connections': 0, 'connection_times': [], 'total_duration': 0})
 
 
     # Obtener listado de asistencia a la reunión con paginación
@@ -105,10 +105,15 @@ def redirect_page():
             participant_name = participant.get('name')
             join_time = participant.get('join_time')
             leave_time = participant.get('leave_time')
+            duration = participant.get('duration')
 
             # Incrementar el número de conexiones y agregar información de fechas y horas
             participant_data[participant_name]['connections'] += 1
             participant_data[participant_name]['connection_times'].append({'join_time': join_time, 'leave_time': leave_time})
+            
+            # Sumar la duración de esta conexión al total
+            participant_data[participant_name]['total_duration'] += duration
+
 
         # Verificar si hay más páginas
         next_page_token = api_info.get('next_page_token')
