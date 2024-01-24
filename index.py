@@ -3,6 +3,7 @@ from flask import Flask, request, redirect, jsonify
 import requests
 import os
 from dotenv import load_dotenv
+from collections import defaultdict
 
 # Cargar variables de entorno desde el archivo .env
 load_dotenv()
@@ -81,8 +82,9 @@ def redirect_page():
     token_data = response.json()
     access_token = token_data.get('access_token')
 
-      # Inicializar una lista para almacenar todos los participantes
-    all_participants = []
+    # Inicializar un diccionario para almacenar información de participantes agrupada por nombre
+    participant_data = defaultdict(lambda: {'connections': 0, 'connection_times': []})
+
 
     # Obtener listado de asistencia a la reunión con paginación
     next_page_token = None
@@ -98,20 +100,27 @@ def redirect_page():
         api_response = requests.get(api_url, headers=headers)
         api_info = api_response.json()
 
-        # Agregar los participantes de la página actual a la lista
-        all_participants.extend(api_info.get('participants', []))
+        # Agregar los participantes de la página actual al diccionario
+        for participant in api_info.get('participants', []):
+            participant_name = participant.get('name')
+            join_time = participant.get('join_time')
+            leave_time = participant.get('leave_time')
+
+            # Incrementar el número de conexiones y agregar información de fechas y horas
+            participant_data[participant_name]['connections'] += 1
+            participant_data[participant_name]['connection_times'].append({'join_time': join_time, 'leave_time': leave_time})
 
         # Verificar si hay más páginas
         next_page_token = api_info.get('next_page_token')
         if not next_page_token:
             break  # Salir del bucle si no hay más páginas
 
-    # Incluir el total de registros en el objeto JSON de salida
+    # Estructurar el resultado con la información agrupada y el número de participantes
     result = {
         'total_records': api_info.get('total_records', 0),
-        'participants': all_participants
+        'num_participants': len(participant_data),  # Nuevo campo
+        'participants': [{'name': key, **value} for key, value in participant_data.items()]
     }
-
     # Puedes hacer lo que quieras con la lista completa de participantes
     return jsonify(result)
 
