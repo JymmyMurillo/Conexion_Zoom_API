@@ -4,6 +4,7 @@ import requests
 import os
 from dotenv import load_dotenv
 from collections import defaultdict
+import pandas as pd
 
 # Cargar variables de entorno desde el archivo .env
 load_dotenv()
@@ -130,8 +131,31 @@ def redirect_page():
         'num_participants': len(participant_data),  # Nuevo campo
         'participants': sorted([{'name': key, **value} for key, value in participant_data.items()], key=lambda x: x['name'])
     }
-    # Puedes hacer lo que quieras con la lista completa de participantes
-    return jsonify(result)
+
+    # Convertir el resultado a un DataFrame de pandas para una visualización más clara
+    df = pd.DataFrame(result['participants'])
+    
+    # Convertir el DataFrame a formato HTML
+    table_html = df.to_html(index=False, classes='table table-bordered table-hover')
+
+    # Renderizar la tabla HTML en la respuesta
+    return f'''
+        <!DOCTYPE html>
+        <html lang="en">
+        <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>Información de participantes</title>
+            <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css">
+        </head>
+        <body>
+            <div class="container mt-3">
+                <h2>Información de participantes</h2>
+                {table_html}
+            </div>
+        </body>
+        </html>
+    '''
 
 if __name__ == '__main__':
     app.run(debug=True)
