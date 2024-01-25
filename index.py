@@ -84,7 +84,7 @@ def redirect_page():
     access_token = token_data.get('access_token')
 
     # Inicializar un diccionario para almacenar información de participantes agrupada por nombre
-    participant_data = defaultdict(lambda: {'connections': 0, 'connection_times': [], 'total_duration': 0,   'id': None, 'user_email': None})
+    participant_data = defaultdict(lambda: {'connections': 0, 'connection_times': [], 'total_duration': 0})
 
 
     # Obtener listado de asistencia a la reunión con paginación
@@ -107,10 +107,6 @@ def redirect_page():
             join_time = participant.get('join_time')
             leave_time = participant.get('leave_time')
             duration = participant.get('duration')
-
-            # Actualizar los campos del participante
-            participant_data[participant_name]['id'] = participant.get('id')
-            participant_data[participant_name]['user_email'] = participant.get('user_email')
 
             # Incrementar el número de conexiones y agregar información de fechas y horas
             participant_data[participant_name]['connections'] += 1
