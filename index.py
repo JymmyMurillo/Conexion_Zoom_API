@@ -128,7 +128,7 @@ def redirect_page():
     result = {
         'total_records': api_info.get('total_records', 0),
         'num_participants': len(participant_data),  # Nuevo campo
-        'participants': [{'name': key, **value} for key, value in participant_data.items()]
+        'participants': sorted([{'name': key, **value} for key, value in participant_data.items()], key=lambda x: x['name'])
     }
     # Puedes hacer lo que quieras con la lista completa de participantes
     return jsonify(result)
