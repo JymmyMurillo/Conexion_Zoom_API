@@ -107,10 +107,14 @@ def redirect_page():
             leave_time = participant.get('leave_time')
             duration = participant.get('duration')
 
+            # Actualizar los campos del participante
+            participant_data[participant_name]['id'] = participant.get('id')
+            participant_data[participant_name]['user_email'] = participant.get('user_email')
+
             # Incrementar el número de conexiones y agregar información de fechas y horas
             participant_data[participant_name]['connections'] += 1
             participant_data[participant_name]['connection_times'].append({'join_time': join_time, 'leave_time': leave_time})
-            
+
             # Sumar la duración de esta conexión al total
             participant_data[participant_name]['total_duration'] += duration
 
