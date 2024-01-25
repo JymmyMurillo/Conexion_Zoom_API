@@ -83,7 +83,7 @@ def redirect_page():
     access_token = token_data.get('access_token')
 
     # Inicializar un diccionario para almacenar información de participantes agrupada por nombre
-    participant_data = defaultdict(lambda: {'connections': 0, 'connection_times': [], 'total_duration': 0})
+    participant_data = defaultdict(lambda: {'connections': 0, 'connection_times': [], 'total_duration': 0,   'id': None, 'user_email': None})
 
 
     # Obtener listado de asistencia a la reunión con paginación
