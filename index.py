@@ -5,6 +5,7 @@ import os
 from dotenv import load_dotenv
 from collections import defaultdict
 import pandas as pd
+from datetime import timedelta
 
 # Cargar variables de entorno desde el archivo .env
 load_dotenv()
@@ -130,6 +131,10 @@ def redirect_page():
 
     # Convertir el resultado a un DataFrame de pandas para una visualización más clara
     df = pd.DataFrame(result['participants'])
+    
+    # Convertir la duración total a formato de horas, minutos y segundos
+    df['total_duration'] = df['total_duration'].apply(lambda x: str(timedelta(seconds=x)))
+
     
     # Convertir el DataFrame a formato HTML
     table_html = df.to_html(index=False, classes='table table-bordered table-hover')
