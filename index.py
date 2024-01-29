@@ -5,8 +5,9 @@ import os
 from dotenv import load_dotenv
 from collections import defaultdict
 import pandas as pd
-from datetime import timedelta
+from datetime import timedelta, datetime
 from io import BytesIO
+import pytz
 
 # Cargar variables de entorno desde el archivo .env
 load_dotenv()
@@ -113,9 +114,22 @@ def redirect_page():
             leave_time = participant.get('leave_time')
             duration = participant.get('duration', 0)
 
+            # Convertir las cadenas de tiempo a objetos datetime y ajustar la zona horaria
+            join_time = datetime.fromisoformat(join_time[:-1])  # Eliminar la 'Z' al final
+            join_time = join_time.replace(tzinfo=pytz.utc)  # Establecer la zona horaria UTC
+            join_time_colombia = join_time.astimezone(pytz.timezone('America/Bogota'))  # Convertir a zona horaria de Colombia
+
+            leave_time = datetime.fromisoformat(leave_time[:-1])  # Eliminar la 'Z' al final
+            leave_time = leave_time.replace(tzinfo=pytz.utc)  # Establecer la zona horaria UTC
+            leave_time_colombia = leave_time.astimezone(pytz.timezone('America/Bogota'))  # Convertir a zona horaria de Colombia
+
+
             # Incrementar el número de conexiones y agregar información de fechas y horas
             participant_data[participant_name]['connections'] += 1
-            participant_data[participant_name]['connection_times'].append({'join_time': join_time, 'leave_time': leave_time})
+            participant_data[participant_name]['connection_times'].append({
+            'join_time': join_time_colombia.strftime('%Y-%m-%d %H:%M:%S'),
+            'leave_time': leave_time_colombia.strftime('%Y-%m-%d %H:%M:%S')
+        })
 
             # Sumar la duración de esta conexión al total
             participant_data[participant_name]['total_duration'] += duration
