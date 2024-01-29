@@ -107,7 +107,7 @@ def redirect_page():
             participant_name = participant.get('name')
             join_time = participant.get('join_time')
             leave_time = participant.get('leave_time')
-            duration = participant.get('duration')
+            duration = participant.get('duration', 0)
 
             # Incrementar el número de conexiones y agregar información de fechas y horas
             participant_data[participant_name]['connections'] += 1
@@ -132,12 +132,20 @@ def redirect_page():
     # Convertir el resultado a un DataFrame de pandas para una visualización más clara
     df = pd.DataFrame(result['participants'])
     
+    # Crear una nueva columna 'connection_info' que contenga la información formateada de conexión y desconexión
+    df['connection_info'] = df.apply(lambda row: '<br>'.join([f'{pair["join_time"]} to {pair["leave_time"]}' for pair in row['connection_times']]), axis=1)
+
+
+    # Eliminar la columna 'connection_times' original
+    df = df.drop('connection_times', axis=1)
+
+    
     # Convertir la duración total a formato de horas, minutos y segundos
     df['total_duration'] = df['total_duration'].apply(lambda x: str(timedelta(seconds=x)))
 
     
     # Convertir el DataFrame a formato HTML
-    table_html = df.to_html(index=False, classes='table table-bordered table-hover')
+    table_html = df.to_html(index=False, classes='table table-bordered table-hover', escape=False)
 
     # Renderizar la tabla HTML en la respuesta
     return f'''
