@@ -1,11 +1,12 @@
 import base64
-from flask import Flask, request, redirect, jsonify
+from flask import Flask, request, redirect, jsonify, send_file
 import requests
 import os
 from dotenv import load_dotenv
 from collections import defaultdict
 import pandas as pd
 from datetime import timedelta
+from io import BytesIO
 
 # Cargar variables de entorno desde el archivo .env
 load_dotenv()
@@ -67,9 +68,12 @@ def home():
         </html>
     '''
 
+result = {}
+
 @app.route('/redirect')
 def redirect_page():
     """Ruta que maneja la redirección desde Zoom después de la autorización."""
+    global result
     # Recuperar el código de autorización de la consulta de redireccionamiento
     code = request.args.get('code')
 
@@ -160,11 +164,54 @@ def redirect_page():
         <body>
             <div class="container mt-3">
                 <h2>Información de participantes</h2>
+                <a class="export-button btn btn-primary" href="/export">Exportar a Excel</a>
                 {table_html}
             </div>
         </body>
         </html>
     '''
+
+@app.route('/export')
+def export_to_excel():
+    global result
+    # Obtener el DataFrame con la información de los participantes
+    df = pd.DataFrame(result['participants'])
+
+    # Crear una nueva columna 'connection_info' que contenga la información formateada de conexión y desconexión
+    df['connection_info'] = df.apply(lambda row: '\n'.join([f'{pair["join_time"]} to {pair["leave_time"]}' for pair in row['connection_times']]), axis=1)
+
+    # Eliminar la columna 'connection_times' original
+    df = df.drop('connection_times', axis=1)
+
+
+    # Crear un objeto BytesIO para almacenar el archivo Excel
+    excel_io = BytesIO()
+
+    excel_writer = pd.ExcelWriter(excel_io, engine='xlsxwriter')
+
+    # Convertir el DataFrame a un archivo Excel
+    df.to_excel(excel_writer, index=False, sheet_name='Participantes')
+
+    # Obtener el objeto ExcelWriter
+    workbook = excel_writer.book
+    worksheet = excel_writer.sheets['Participantes']
+
+    # Añadir un formato para las celdas con saltos de línea
+    wrap_format = workbook.add_format({'text_wrap': True, 'valign': 'top'})
+
+    # Aplicar el formato a la columna 'connection_info'
+    worksheet.set_column('H:H', None, wrap_format)
+
+    # Guardar el archivo Excel en el objeto BytesIO
+    excel_writer.close()
+    excel_io.seek(0)
+
+
+
+    # Enviar el archivo Excel como respuesta
+    return send_file(excel_io, mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', download_name='informacion_participantes.xlsx')
+
+
 
 if __name__ == '__main__':
     app.run(debug=True)
