@@ -70,6 +70,7 @@ def home():
     '''
 
 result = {}
+meeting_data = {}
 
 @app.route('/redirect')
 def redirect_page():
@@ -88,10 +89,23 @@ def redirect_page():
     response = requests.post(token_url, headers=headers, data=data)
     token_data = response.json()
     access_token = token_data.get('access_token')
+    
+    # Obtener información de la reunión
+    meeting_url = f'{base_api_url}/meetings/{meeting_id}'
+    headers = {'Authorization': f'Bearer {access_token}'}
+    meeting_response = requests.get(meeting_url, headers=headers)
+    meeting_data = meeting_response.json()
+
+    # Ajustar la fecha de inicio a la zona horaria de Colombia
+    start_time_utc = datetime.fromisoformat(meeting_data['start_time'][:-1]).replace(tzinfo=pytz.utc)
+    start_time_colombia = start_time_utc.astimezone(pytz.timezone('America/Bogota'))
+    formatted_start_time = start_time_colombia.strftime('%Y-%m-%d %H:%M:%S')
+
+    # Actualizar la información de la reunión con la fecha ajustada
+    meeting_data.update({'start_time_colombia': formatted_start_time})
 
     # Inicializar un diccionario para almacenar información de participantes agrupada por nombre
     participant_data = defaultdict(lambda: {'connections': 0, 'connection_times': [], 'total_duration': 0})
-
 
     # Obtener listado de asistencia a la reunión con paginación
     next_page_token = None
@@ -103,7 +117,6 @@ def redirect_page():
         else:
             api_url = f'{base_api_url}/report/meetings/{meeting_id}/participants?page_size=300'
 
-        headers = {'Authorization': f'Bearer {access_token}'}
         api_response = requests.get(api_url, headers=headers)
         api_info = api_response.json()
 
@@ -123,7 +136,6 @@ def redirect_page():
             leave_time = leave_time.replace(tzinfo=pytz.utc)  # Establecer la zona horaria UTC
             leave_time_colombia = leave_time.astimezone(pytz.timezone('America/Bogota'))  # Convertir a zona horaria de Colombia
 
-
             # Incrementar el número de conexiones y agregar información de fechas y horas
             participant_data[participant_name]['connections'] += 1
             participant_data[participant_name]['connection_times'].append({
@@ -133,7 +145,6 @@ def redirect_page():
 
             # Sumar la duración de esta conexión al total
             participant_data[participant_name]['total_duration'] += duration
-
 
         # Verificar si hay más páginas
         next_page_token = api_info.get('next_page_token')
@@ -153,11 +164,9 @@ def redirect_page():
     # Crear una nueva columna 'connection_info' que contenga la información formateada de conexión y desconexión
     df['connection_info'] = df.apply(lambda row: '<br>'.join([f'{pair["join_time"]} to {pair["leave_time"]}' for pair in row['connection_times']]), axis=1)
 
-
     # Eliminar la columna 'connection_times' original
     df = df.drop('connection_times', axis=1)
 
-    
     # Convertir la duración total a formato de horas, minutos y segundos
     df['total_duration'] = df['total_duration'].apply(lambda x: str(timedelta(seconds=x)))
 
@@ -184,6 +193,11 @@ def redirect_page():
         </head>
         <body>
             <div class="container mt-3">
+                <h2>Información de la reunión</h2>
+                <p><strong>Nombre de la reunión:</strong> {meeting_data.get('topic')}</p>
+                <p><strong>Organizador:</strong> {meeting_data.get('host_email')}</p>
+                <p><strong>Fecha de la reunión:</strong> {meeting_data.get('start_time_colombia')}</p>
+                <p><strong>ID de la reunión:</strong> {meeting_data.get('id')}</p>
                 <h2>Información de participantes</h2>
                 <a class="export-button btn btn-primary" href="/export">Exportar a Excel</a>
                 {table_html}
@@ -212,7 +226,6 @@ def export_to_excel():
         'total_duration': 'Duración total'
     })
 
-
     # Crear un objeto BytesIO para almacenar el archivo Excel
     excel_io = BytesIO()
 
@@ -235,12 +248,8 @@ def export_to_excel():
     excel_writer.close()
     excel_io.seek(0)
 
-
-
     # Enviar el archivo Excel como respuesta
     return send_file(excel_io, mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', download_name='informacion_participantes.xlsx')
-
-
 
 if __name__ == '__main__':
     app.run(debug=True)
