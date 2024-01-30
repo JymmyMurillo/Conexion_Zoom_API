@@ -161,6 +161,13 @@ def redirect_page():
     # Convertir la duración total a formato de horas, minutos y segundos
     df['total_duration'] = df['total_duration'].apply(lambda x: str(timedelta(seconds=x)))
 
+    # Renombrar las columnas a español
+    df = df.rename(columns={
+        'name': 'Nombre del participante',
+        'connections': 'Número de conexiones',
+        'connection_info': 'Información de conexión y desconexión',
+        'total_duration': 'Duración total'
+    })
     
     # Convertir el DataFrame a formato HTML
     table_html = df.to_html(index=False, classes='table table-bordered table-hover', escape=False)
@@ -196,6 +203,14 @@ def export_to_excel():
 
     # Eliminar la columna 'connection_times' original
     df = df.drop('connection_times', axis=1)
+    
+    # Renombrar las columnas a español
+    df = df.rename(columns={
+        'name': 'Nombre del participante',
+        'connections': 'Número de conexiones',
+        'connection_info': 'Información de conexión y desconexión',
+        'total_duration': 'Duración total'
+    })
 
 
     # Crear un objeto BytesIO para almacenar el archivo Excel
@@ -204,7 +219,7 @@ def export_to_excel():
     excel_writer = pd.ExcelWriter(excel_io, engine='xlsxwriter')
 
     # Convertir el DataFrame a un archivo Excel
-    df.to_excel(excel_writer, index=False, sheet_name='Participantes')
+    df.to_excel(excel_writer, index=False, sheet_name='Participantes', header=True)
 
     # Obtener el objeto ExcelWriter
     workbook = excel_writer.book
