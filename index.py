@@ -181,6 +181,9 @@ def redirect_page():
     # Convertir el DataFrame a formato HTML
     table_html = df.to_html(index=False, classes='table table-bordered table-hover', escape=False)
 
+    # Aplicar estilos para centrar el contenido en la tabla HTML
+    table_html = table_html.replace('<td', '<td style="text-align:center; vertical-align:middle;"')
+    
     # Obtener el número total de participantes y agregarlo a la visualización HTML
     total_participants_html = f'<p><strong>Número total de participantes:</strong> {len(participant_data)}</p>'
 
