@@ -247,12 +247,19 @@ def export_to_excel():
         # Obtener el nombre real de la hoja del DataFrame después de escribirlo
         sheet_name = writer.sheets['Participantes'].name
 
-        # Añadir un formato para las celdas con saltos de línea
-        wrap_format = writer.book.add_format({'text_wrap': True, 'valign': 'top'})
+        # Añadir un formato para las celdas con saltos de línea y centrado vertical y horizontal
+        wrap_center_format = writer.book.add_format({'text_wrap': True, 'align': 'center', 'valign': 'vcenter'})
 
         # Aplicar el formato a la columna 'Información de conexión y desconexión'
-        writer.sheets[sheet_name].set_column(f'H:H', None, wrap_format)
-
+        writer.sheets[sheet_name].set_column('D:D', 50, wrap_center_format)  # Ajusta el ancho (50 es un ejemplo)
+        
+        # Ajustar automáticamente el ancho de las demás columnas
+        for i, col in enumerate(df.columns):
+            if col != 'Información de conexión y desconexión':
+                max_len = df[col].astype(str).apply(len).max()
+                max_len = max_len if max_len > len(col) else len(col)
+                writer.sheets[sheet_name].set_column(i, i, max_len + 2, wrap_center_format)
+                
         # Escribir la información de la reunión
         writer.sheets[sheet_name].write('A1', 'Información de la reunión', writer.book.add_format({'bold': True, 'underline': True}))
         writer.sheets[sheet_name].write('A2', f'Nombre de la reunión: {meeting_data.get("topic")}')
