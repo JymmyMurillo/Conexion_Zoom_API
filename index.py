@@ -226,33 +226,39 @@ def export_to_excel():
         'connection_info': 'Información de conexión y desconexión',
         'total_duration': 'Duración total'
     })
-
-    # Crear un objeto BytesIO para almacenar el archivo Excel
-    excel_io = BytesIO()
     
     # Obtener la fecha de la reunión y el nombre de la reunión para construir el nombre del archivo
     meeting_date_colombia = datetime.fromisoformat(meeting_data['start_time'][:-1]).astimezone(pytz.timezone('America/Bogota'))
     meeting_date_str = meeting_date_colombia.strftime('%Y-%m-%d')
     excel_filename = f'{meeting_date_str}_{meeting_data["topic"].replace(" ", "_")}_Asistencia.xlsx'
 
+    # Crear un objeto BytesIO para almacenar el archivo Excel
+    excel_io = BytesIO()
 
-    excel_writer = pd.ExcelWriter(excel_io, engine='xlsxwriter')
+   # Escribir la información de la reunión en el Excel antes de convertir el DataFrame
+    with pd.ExcelWriter(excel_io, engine='xlsxwriter') as writer:
+        # Convertir el DataFrame a un archivo Excel
+        df.to_excel(writer, index=False, startrow=8, sheet_name='Participantes', header=True)
 
-    # Convertir el DataFrame a un archivo Excel
-    df.to_excel(excel_writer, index=False, sheet_name='Participantes', header=True)
+        # Obtener el nombre real de la hoja del DataFrame después de escribirlo
+        sheet_name = writer.sheets['Participantes'].name
 
-    # Obtener el objeto ExcelWriter
-    workbook = excel_writer.book
-    worksheet = excel_writer.sheets['Participantes']
+        # Añadir un formato para las celdas con saltos de línea
+        wrap_format = writer.book.add_format({'text_wrap': True, 'valign': 'top'})
 
-    # Añadir un formato para las celdas con saltos de línea
-    wrap_format = workbook.add_format({'text_wrap': True, 'valign': 'top'})
+        # Aplicar el formato a la columna 'Información de conexión y desconexión'
+        writer.sheets[sheet_name].set_column(f'H:H', None, wrap_format)
 
-    # Aplicar el formato a la columna 'connection_info'
-    worksheet.set_column('H:H', None, wrap_format)
+        # Escribir la información de la reunión
+        writer.sheets[sheet_name].write('A1', 'Información de la reunión', writer.book.add_format({'bold': True, 'underline': True}))
+        writer.sheets[sheet_name].write('A2', f'Nombre de la reunión: {meeting_data.get("topic")}')
+        writer.sheets[sheet_name].write('A3', f'Organizador: {meeting_data.get("host_email")}')
+        writer.sheets[sheet_name].write('A4', f'Fecha de la reunión: {meeting_data.get("start_time_colombia")}')
+        writer.sheets[sheet_name].write('A5', f'ID de la reunión: {meeting_data.get("id")}')
+
 
     # Guardar el archivo Excel en el objeto BytesIO
-    excel_writer.close()
+
     excel_io.seek(0)
 
     # Enviar el archivo Excel como respuesta
