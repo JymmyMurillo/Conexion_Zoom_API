@@ -1,12 +1,12 @@
 import base64
-from flask import Flask, request, redirect, jsonify, send_file
-import requests
 import os
-from dotenv import load_dotenv
 from collections import defaultdict
-import pandas as pd
 from datetime import timedelta, datetime
 from io import BytesIO
+from flask import Flask, request, send_file
+import requests
+from dotenv import load_dotenv
+import pandas as pd
 import pytz
 
 # Cargar variables de entorno desde el archivo .env
@@ -25,7 +25,7 @@ meeting_id = os.getenv('ZOOM_MEETING_ID') # Corresponde al ID de la reunion a re
 authorization_url = f'https://zoom.us/oauth/authorize?response_type=code&client_id={client_id}&redirect_uri={redirect_uri}'
 
 # API_URL base
-base_api_url = f'https://api.zoom.us/v2'
+BASE_API_URL = 'https://api.zoom.us/v2'
 
 @app.route('/')
 def home():
@@ -75,7 +75,7 @@ meeting_data = {}
 @app.route('/redirect')
 def redirect_page():
     """Ruta que maneja la redirección desde Zoom después de la autorización."""
-    global result
+    global result, meeting_data
     # Recuperar el código de autorización de la consulta de redireccionamiento
     code = request.args.get('code')
 
@@ -87,11 +87,12 @@ def redirect_page():
 
     # Hacer la solicitud para obtener el token de acceso
     response = requests.post(token_url, headers=headers, data=data)
+    response.raise_for_status()
     token_data = response.json()
     access_token = token_data.get('access_token')
     
     # Obtener información de la reunión
-    meeting_url = f'{base_api_url}/meetings/{meeting_id}'
+    meeting_url = f'{BASE_API_URL}/meetings/{meeting_id}'
     headers = {'Authorization': f'Bearer {access_token}'}
     meeting_response = requests.get(meeting_url, headers=headers)
     meeting_data = meeting_response.json()
@@ -113,11 +114,12 @@ def redirect_page():
     while True:
         # Construir la URL de la API con el token de la página siguiente si está disponible
         if next_page_token:
-            api_url = f'{base_api_url}/report/meetings/{meeting_id}/participants?page_size=300&next_page_token={next_page_token}'
+            api_url = f'{BASE_API_URL}/report/meetings/{meeting_id}/participants?page_size=300&next_page_token={next_page_token}'
         else:
-            api_url = f'{base_api_url}/report/meetings/{meeting_id}/participants?page_size=300'
+            api_url = f'{BASE_API_URL}/report/meetings/{meeting_id}/participants?page_size=300'
 
         api_response = requests.get(api_url, headers=headers)
+        api_response.raise_for_status()
         api_info = api_response.json()
 
         # Agregar los participantes de la página actual al diccionario
@@ -128,13 +130,11 @@ def redirect_page():
             duration = participant.get('duration', 0)
 
             # Convertir las cadenas de tiempo a objetos datetime y ajustar la zona horaria
-            join_time = datetime.fromisoformat(join_time[:-1])  # Eliminar la 'Z' al final
-            join_time = join_time.replace(tzinfo=pytz.utc)  # Establecer la zona horaria UTC
-            join_time_colombia = join_time.astimezone(pytz.timezone('America/Bogota'))  # Convertir a zona horaria de Colombia
+            join_time = datetime.fromisoformat(join_time).replace(tzinfo=pytz.utc)
+            join_time_colombia = join_time.astimezone(pytz.timezone('America/Bogota'))
 
-            leave_time = datetime.fromisoformat(leave_time[:-1])  # Eliminar la 'Z' al final
-            leave_time = leave_time.replace(tzinfo=pytz.utc)  # Establecer la zona horaria UTC
-            leave_time_colombia = leave_time.astimezone(pytz.timezone('America/Bogota'))  # Convertir a zona horaria de Colombia
+            leave_time = datetime.fromisoformat(leave_time).replace(tzinfo=pytz.utc)
+            leave_time_colombia = leave_time.astimezone(pytz.timezone('America/Bogota'))
 
             # Incrementar el número de conexiones y agregar información de fechas y horas
             participant_data[participant_name]['connections'] += 1
@@ -208,7 +208,8 @@ def redirect_page():
 
 @app.route('/export')
 def export_to_excel():
-    global result
+    global result, meeting_data
+    
     # Obtener el DataFrame con la información de los participantes
     df = pd.DataFrame(result['participants'])
 
@@ -228,6 +229,12 @@ def export_to_excel():
 
     # Crear un objeto BytesIO para almacenar el archivo Excel
     excel_io = BytesIO()
+    
+    # Obtener la fecha de la reunión y el nombre de la reunión para construir el nombre del archivo
+    meeting_date_colombia = datetime.fromisoformat(meeting_data['start_time'][:-1]).astimezone(pytz.timezone('America/Bogota'))
+    meeting_date_str = meeting_date_colombia.strftime('%Y-%m-%d')
+    excel_filename = f'{meeting_date_str}_{meeting_data["topic"].replace(" ", "_")}_Asistencia.xlsx'
+
 
     excel_writer = pd.ExcelWriter(excel_io, engine='xlsxwriter')
 
@@ -249,7 +256,7 @@ def export_to_excel():
     excel_io.seek(0)
 
     # Enviar el archivo Excel como respuesta
-    return send_file(excel_io, mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', download_name='informacion_participantes.xlsx')
+    return send_file(excel_io, mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', download_name=excel_filename)
 
 if __name__ == '__main__':
     app.run(debug=True)
