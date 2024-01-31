@@ -86,7 +86,7 @@ def redirect_page():
     data = {'grant_type': 'authorization_code', 'code': code, 'redirect_uri': redirect_uri}
 
     # Hacer la solicitud para obtener el token de acceso
-    response = requests.post(token_url, headers=headers, data=data)
+    response = requests.post(token_url, headers=headers, data=data, timeout=10)
     response.raise_for_status()
     token_data = response.json()
     access_token = token_data.get('access_token')
@@ -94,7 +94,7 @@ def redirect_page():
     # Obtener información de la reunión
     meeting_url = f'{BASE_API_URL}/meetings/{meeting_id}'
     headers = {'Authorization': f'Bearer {access_token}'}
-    meeting_response = requests.get(meeting_url, headers=headers)
+    meeting_response = requests.get(meeting_url, headers=headers, timeout=10)
     meeting_data = meeting_response.json()
 
     # Ajustar la fecha de inicio a la zona horaria de Colombia
@@ -118,7 +118,7 @@ def redirect_page():
         else:
             api_url = f'{BASE_API_URL}/report/meetings/{meeting_id}/participants?page_size=300'
 
-        api_response = requests.get(api_url, headers=headers)
+        api_response = requests.get(api_url, headers=headers, timeout=10)
         api_response.raise_for_status()
         api_info = api_response.json()
 
