@@ -181,6 +181,9 @@ def redirect_page():
     # Convertir el DataFrame a formato HTML
     table_html = df.to_html(index=False, classes='table table-bordered table-hover', escape=False)
 
+    # Obtener el número total de participantes y agregarlo a la visualización HTML
+    total_participants_html = f'<p><strong>Número total de participantes:</strong> {len(participant_data)}</p>'
+
     # Renderizar la tabla HTML en la respuesta
     return f'''
         <!DOCTYPE html>
@@ -198,6 +201,7 @@ def redirect_page():
                 <p><strong>Organizador:</strong> {meeting_data.get('host_email')}</p>
                 <p><strong>Fecha de la reunión:</strong> {meeting_data.get('start_time_colombia')}</p>
                 <p><strong>ID de la reunión:</strong> {meeting_data.get('id')}</p>
+                {total_participants_html}
                 <h2>Información de participantes</h2>
                 <a class="export-button btn btn-primary" href="/export">Exportar a Excel</a>
                 {table_html}
@@ -255,6 +259,7 @@ def export_to_excel():
         writer.sheets[sheet_name].write('A3', f'Organizador: {meeting_data.get("host_email")}')
         writer.sheets[sheet_name].write('A4', f'Fecha de la reunión: {meeting_data.get("start_time_colombia")}')
         writer.sheets[sheet_name].write('A5', f'ID de la reunión: {meeting_data.get("id")}')
+        writer.sheets['Participantes'].write('A7', f'Número total de participantes: {result["num_participants"]}')
 
 
     # Guardar el archivo Excel en el objeto BytesIO
